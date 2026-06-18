@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTI Admin | Practicantes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg:#06080d;--bg2:#0c1018;--fg:#e8eaf0;--muted:#6b7394;
+      --accent:#00f0ff;--accent2:#00ff88;--accent4:#ff6b6b;
+      --card:#111623;--border:#1e2640;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg)}
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(6,8,13,0.85);z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
+    .modal-backdrop.open{display:flex}
+    .modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;padding:32px}
+
+    /* Form fields */
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+    .field label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .field input,.field textarea,.field select{
+      background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+      padding:10px 14px;color:var(--fg);font-family:'Space Grotesk',sans-serif;font-size:14px;
+      outline:none;transition:border-color .2s;width:100%
+    }
+    .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent)}
+    .field textarea{resize:vertical;min-height:80px}
+    .field select option{background:var(--bg2)}
+
+    /* Buttons */
+    .btn{padding:9px 18px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:6px}
+    .btn-primary{background:var(--accent);color:var(--bg)}
+    .btn-primary:hover{opacity:.85;transform:translateY(-1px)}
+    .btn-success{background:var(--accent2);color:var(--bg)}
+    .btn-success:hover{opacity:.85;transform:translateY(-1px)}
+    .btn-danger{background:transparent;border:1px solid var(--accent4);color:var(--accent4)}
+    .btn-danger:hover{background:var(--accent4);color:var(--bg)}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+    .btn-ghost:hover{border-color:var(--fg);color:var(--fg)}
+    .btn-icon{padding:7px 10px;border-radius:6px;font-size:12px}
+
+    /* Table */
+    table{width:100%;border-collapse:collapse}
+    th{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+    td{padding:12px 16px;border-bottom:1px solid rgba(30,38,64,0.4);vertical-align:middle}
+    tr:hover td{background:rgba(255,255,255,0.015)}
+
+    /* Stat card */
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px}
+
+    /* Skill chip */
+    .skill-chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.05);border:1px solid var(--border);margin:1px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:13px;transform:translateY(80px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1);z-index:200;border:1px solid}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.ok{background:var(--card);border-color:var(--accent2);color:var(--accent2)}
+    .toast.err{background:var(--card);border-color:var(--accent4);color:var(--accent4)}
+
+    /* Filter bar */
+    .filter-input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
+    .filter-input:focus{border-color:var(--accent)}
+    .filter-input::placeholder{color:var(--muted)}
+
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{animation:fadeIn .3s ease-out both}
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <nav class="sticky top-0 z-40 backdrop-blur-xl px-6 py-4 flex items-center justify-between" style="background:rgba(6,8,13,0.95);border-bottom:1px solid var(--border)">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),var(--accent2))">
+        <i class="fas fa-database text-sm" style="color:var(--bg)"></i>
+      </div>
+      <div>
+        <span class="font-display font-bold text-lg tracking-tight">OTI<span style="color:var(--accent)">.</span>Admin</span>
+        <span class="font-mono text-xs ml-3" style="color:var(--muted)">interns.json</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="/" class="btn btn-ghost hidden sm:inline-flex"><i class="fas fa-eye"></i> Ver sitio</a>
+      <button id="add-btn" class="btn btn-success"><i class="fas fa-plus"></i> Agregar</button>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Stats -->
+    <div id="stats-row" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"></div>
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap gap-3 mb-5">
+      <input id="search-input" class="filter-input flex-1 min-w-40" type="text" placeholder="Buscar por nombre o rol...">
+      <select id="cohort-filter" class="filter-input">
+        <option value="">Todas las cohortes</option>
+      </select>
+    </div>
+
+    <!-- Tabla -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+      <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border)">
+        <h2 class="font-display font-semibold text-base">Practicantes</h2>
+        <span id="count-label" class="font-mono text-xs" style="color:var(--muted)"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Practicante</th>
+              <th>Rol</th>
+              <th>Cohorte</th>
+              <th>Skills</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="interns-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Add/Edit -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="font-display font-bold text-xl" id="modal-title">Agregar practicante</h3>
+        <button class="btn btn-ghost btn-icon" id="modal-close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <form id="intern-form" novalidate>
+        <input type="hidden" id="field-id">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <div class="field sm:col-span-2">
+            <label>Nombre completo *</label>
+            <input type="text" id="field-name" placeholder="Ej: Carlos Mendoza" required>
+          </div>
+          <div class="field">
+            <label>Rol *</label>
+            <input type="text" id="field-role" placeholder="Ej: Desarrollador Backend" required>
+          </div>
+          <div class="field">
+            <label>Cohorte *</label>
+            <select id="field-cohort" required></select>
+          </div>
+          <div class="field sm:col-span-2">
+            <label>Descripción *</label>
+            <textarea id="field-description" placeholder="Descripcion de las actividades realizadas durante la practica..." required></textarea>
+          </div>
+          <div class="field sm:col-span-2">
+            <label>Skills (separados por coma) *</label>
+            <input type="text" id="field-skills" placeholder="Ej: Node.js, Docker, PostgreSQL" required>
+          </div>
+          <div class="field sm:col-span-2">
+            <label>URL de avatar</label>
+            <input type="url" id="field-avatar" placeholder="https://ejemplo.com/foto.jpg">
+            <span class="font-mono text-xs mt-1" style="color:var(--muted)">Opcional — se genera una imagen aleatoria si se deja vacio</span>
+          </div>
+        </div>
+        <div id="form-error" class="font-mono text-xs mb-4" style="color:var(--accent4);display:none"></div>
+        <div class="flex justify-end gap-3 mt-2">
+          <button type="button" class="btn btn-ghost" id="cancel-btn">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="save-btn"><i class="fas fa-save"></i> Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ─── Estado ───
+    let cohorts  = [];
+    let interns  = [];
+    let editingId = null;
+
+    // ─── API helper ───
+    async function api(method, endpoint, body) {
+      const opts = { method, headers: {} };
+      if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const res = await fetch(endpoint, opts);
+      if (res.status === 204) return null;
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+      return res.json();
+    }
+
+    // ─── Toast ───
+    function toast(msg, ok = true) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `toast ${ok ? 'ok' : 'err'}`;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3200);
+    }
+
+    // ─── Cargar datos ───
+    async function load() {
+      const data = await api('GET', '/api/interns');
+      cohorts = data.cohorts;
+      interns = data.interns;
+      populateCohortSelects();
+      renderStats();
+      renderTable();
+    }
+
+    // ─── Poblar selects de cohorte ───
+    function populateCohortSelects() {
+      const formSel   = document.getElementById('field-cohort');
+      const filterSel = document.getElementById('cohort-filter');
+
+      formSel.innerHTML = cohorts.map(c =>
+        `<option value="${c.id}">${c.label} — ${c.name}</option>`
+      ).join('');
+
+      filterSel.innerHTML = '<option value="">Todas las cohortes</option>' +
+        cohorts.map(c => `<option value="${c.id}">${c.label} — ${c.name}</option>`).join('');
+    }
+
+    // ─── Stats ───
+    function renderStats() {
+      const last2 = cohorts.slice(-2);
+      document.getElementById('stats-row').innerHTML = `
+        <div class="stat-card">
+          <div class="font-mono text-3xl font-bold mb-1" style="color:var(--accent)">${interns.length}</div>
+          <div class="text-sm" style="color:var(--muted)">Total practicantes</div>
+        </div>
+        <div class="stat-card">
+          <div class="font-mono text-3xl font-bold mb-1" style="color:var(--accent2)">${cohorts.length}</div>
+          <div class="text-sm" style="color:var(--muted)">Cohortes activas</div>
+        </div>
+        ${last2.map(c => {
+          const count = interns.filter(i => i.cohort === c.id).length;
+          return `
+            <div class="stat-card">
+              <div class="flex items-center gap-2 mb-2">
+                <span style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;display:inline-block"></span>
+                <span class="font-mono text-xs" style="color:var(--muted)">${c.label}</span>
+              </div>
+              <div class="font-mono text-3xl font-bold" style="color:${c.color}">${count}</div>
+              <div class="text-sm truncate" style="color:var(--muted)">${c.name}</div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    // ─── Filtro activo ───
+    function getFiltered() {
+      const q      = document.getElementById('search-input').value.toLowerCase().trim();
+      const cohort = document.getElementById('cohort-filter').value;
+      return interns.filter(i => {
+        const matchQ = !q || i.name.toLowerCase().includes(q) || i.role.toLowerCase().includes(q);
+        const matchC = cohort === '' || i.cohort === parseInt(cohort);
+        return matchQ && matchC;
+      });
+    }
+
+    // ─── Render tabla ───
+    function renderTable() {
+      const filtered = getFiltered();
+      const tbody    = document.getElementById('interns-tbody');
+      document.getElementById('count-label').textContent =
+        filtered.length === interns.length
+          ? `${interns.length} registros`
+          : `${filtered.length} de ${interns.length}`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 font-mono text-sm" style="color:var(--muted)">Sin resultados.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(intern => {
+        const c = cohorts.find(x => x.id === intern.cohort) || {};
+        const avatar = intern.avatar || `https://picsum.photos/seed/${intern.id}/40/40`;
+        return `
+          <tr>
+            <td><span class="font-mono text-xs" style="color:var(--muted)">#${intern.id}</span></td>
+            <td>
+              <div class="flex items-center gap-3">
+                <img src="${avatar}" alt="${intern.name}" loading="lazy"
+                  class="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                  style="border:2px solid ${c.color || 'var(--border)'}">
+                <div class="min-w-0">
+                  <div class="font-semibold text-sm truncate">${intern.name}</div>
+                  <div class="font-mono text-xs truncate" style="color:var(--muted)">${intern.period || c.name || ''}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="text-sm">${intern.role}</span></td>
+            <td>
+              <span class="font-mono text-xs px-2 py-1 rounded" style="background:${(c.color||'#fff')+'18'};color:${c.color||'var(--fg)'}">
+                ${c.label || '—'}
+              </span>
+            </td>
+            <td class="hidden sm:table-cell">
+              ${(intern.skills || []).map(s => `<span class="skill-chip">${s}</span>`).join('')}
+            </td>
+            <td>
+              <div class="flex items-center gap-2 justify-end">
+                <button class="btn btn-ghost btn-icon edit-btn" data-id="${intern.id}" title="Editar">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="btn btn-danger btn-icon delete-btn" data-id="${intern.id}" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.edit-btn').forEach(btn =>
+        btn.addEventListener('click', () => openEdit(parseInt(btn.dataset.id)))
+      );
+      tbody.querySelectorAll('.delete-btn').forEach(btn =>
+        btn.addEventListener('click', () => deleteIntern(parseInt(btn.dataset.id)))
+      );
+    }
+
+    // ─── Modal open/close ───
+    function openModal(title) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('form-error').style.display = 'none';
+      document.getElementById('modal-backdrop').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.remove('open');
+      document.getElementById('intern-form').reset();
+      editingId = null;
+    }
+
+    // ─── Abrir modal para agregar ───
+    function openAdd() {
+      editingId = null;
+      document.getElementById('field-id').value = '';
+      openModal('Agregar practicante');
+    }
+
+    // ─── Abrir modal para editar ───
+    function openEdit(id) {
+      const intern = interns.find(i => i.id === id);
+      if (!intern) return;
+      editingId = id;
+      document.getElementById('field-id').value          = id;
+      document.getElementById('field-name').value        = intern.name;
+      document.getElementById('field-role').value        = intern.role;
+      document.getElementById('field-cohort').value      = intern.cohort;
+      document.getElementById('field-description').value = intern.description;
+      document.getElementById('field-skills').value      = (intern.skills || []).join(', ');
+      document.getElementById('field-avatar').value      = intern.avatar || '';
+      openModal('Editar practicante');
+    }
+
+    // ─── Eliminar ───
+    async function deleteIntern(id) {
+      const intern = interns.find(i => i.id === id);
+      if (!confirm(`¿Eliminar a ${intern?.name}? Esta accion no se puede deshacer.`)) return;
+      await api('DELETE', `/api/interns/${id}`);
+      toast(`${intern?.name} eliminado`);
+      await load();
+    }
+
+    // ─── Validar form ───
+    function validateForm() {
+      const required = ['field-name', 'field-role', 'field-description', 'field-skills'];
+      for (const id of required) {
+        if (!document.getElementById(id).value.trim()) return 'Completa todos los campos obligatorios (*)';
+      }
+      return null;
+    }
+
+    // ─── Submit form ───
+    document.getElementById('intern-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const errMsg = validateForm();
+      if (errMsg) {
+        const el = document.getElementById('form-error');
+        el.textContent = errMsg;
+        el.style.display = 'block';
+        return;
+      }
+
+      const cohortId = parseInt(document.getElementById('field-cohort').value);
+      const cohort   = cohorts.find(c => c.id === cohortId);
+      const skills   = document.getElementById('field-skills').value
+        .split(',').map(s => s.trim()).filter(Boolean);
+
+      const payload = {
+        name:        document.getElementById('field-name').value.trim(),
+        role:        document.getElementById('field-role').value.trim(),
+        cohort:      cohortId,
+        period:      cohort?.name || '',
+        description: document.getElementById('field-description').value.trim(),
+        skills,
+        avatar:      document.getElementById('field-avatar').value.trim() ||
+                     `https://picsum.photos/seed/intern-${Date.now()}/200/200.jpg`,
+      };
+
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+
+      try {
+        if (editingId) {
+          await api('PUT', `/api/interns/${editingId}`, payload);
+          toast(`${payload.name} actualizado`);
+        } else {
+          await api('POST', '/api/interns', payload);
+          toast(`${payload.name} agregado`);
+        }
+        closeModal();
+        await load();
+      } catch (err) {
+        const el = document.getElementById('form-error');
+        el.textContent = 'Error: ' + err.message;
+        el.style.display = 'block';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+      }
+    });
+
+    // ─── Filtros reactivos ───
+    document.getElementById('search-input').addEventListener('input', renderTable);
+    document.getElementById('cohort-filter').addEventListener('change', renderTable);
+
+    // ─── Eventos de modal ───
+    document.getElementById('add-btn').addEventListener('click', openAdd);
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('modal-backdrop').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-backdrop')) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ─── Iniciar ───
+    load().catch(err => {
+      document.getElementById('interns-tbody').innerHTML =
+        `<tr><td colspan="6" class="text-center py-12 font-mono text-sm" style="color:var(--accent4)">
+          <i class="fas fa-triangle-exclamation mr-2"></i>Error cargando datos: ${err.message}
+        </td></tr>`;
+    });
+  </script>
+</body>
+</html>

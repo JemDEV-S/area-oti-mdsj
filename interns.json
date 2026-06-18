@@ -1,0 +1,172 @@
+{
+  "cohorts": [
+    { "id": 0, "label": "2022-A", "name": "Ene - Jun 2022", "color": "#00f0ff" },
+    { "id": 1, "label": "2022-B", "name": "Jul - Dic 2022", "color": "#00ff88" },
+    { "id": 2, "label": "2023-A", "name": "Ene - Jun 2023", "color": "#ffaa00" },
+    { "id": 3, "label": "2023-B", "name": "Jul - Dic 2023", "color": "#ff6b6b" },
+    { "id": 4, "label": "2024-A", "name": "Ene - Jun 2024", "color": "#f97316" },
+    { "id": 5, "label": "2024-B", "name": "Jul - Dic 2024", "color": "#84cc16" }
+  ],
+  "interns": [
+    {
+      "id": 1,
+      "name": "Carlos Mendoza",
+      "role": "Desarrollador Backend",
+      "cohort": 0,
+      "period": "Ene - Jun 2022",
+      "description": "Implemento microservicios en Node.js para el sistema de gestion interna. Optimizo consultas SQL reduciendo tiempos de respuesta en un 40%.",
+      "skills": ["Node.js", "PostgreSQL", "Docker"],
+      "avatar": "https://picsum.photos/seed/carlos-m7/200/200.jpg"
+    },
+    {
+      "id": 2,
+      "name": "Lucia Fernandez",
+      "role": "Seguridad Informatica",
+      "cohort": 0,
+      "period": "Ene - Jun 2022",
+      "description": "Realizo auditorias de seguridad y pentesting a los sistemas de la organizacion. Documento vulnerabilidades y propone soluciones efectivas.",
+      "skills": ["Pentesting", "Wireshark", "Linux"],
+      "avatar": "https://picsum.photos/seed/lucia-f3/200/200.jpg"
+    },
+    {
+      "id": 3,
+      "name": "Diego Ramirez",
+      "role": "Ciencia de Datos",
+      "cohort": 1,
+      "period": "Jul - Dic 2022",
+      "description": "Desarrollo modelos predictivos para el analisis de datos institucionales. Creo dashboards interactivos con Python y D3.js.",
+      "skills": ["Python", "TensorFlow", "D3.js"],
+      "avatar": "https://picsum.photos/seed/diego-r5/200/200.jpg"
+    },
+    {
+      "id": 4,
+      "name": "Valentina Torres",
+      "role": "Diseno UX/UI",
+      "cohort": 1,
+      "period": "Jul - Dic 2022",
+      "description": "Rediseno el portal de servicios digitales mejorando la experiencia de usuario. Implemento un sistema de design tokens unificado.",
+      "skills": ["Figma", "Design Systems", "Accesibilidad"],
+      "avatar": "https://picsum.photos/seed/val-t2/200/200.jpg"
+    },
+    {
+      "id": 5,
+      "name": "Sebastian Lopez",
+      "role": "DevOps Engineer",
+      "cohort": 1,
+      "period": "Jul - Dic 2022",
+      "description": "Automatizo pipelines CI/CD con GitHub Actions. Migro infraestructura a contenedores Docker reduciendo tiempos de deploy en un 70%.",
+      "skills": ["Docker", "Kubernetes", "GitHub Actions"],
+      "avatar": "https://picsum.photos/seed/sebas-l4/200/200.jpg"
+    },
+    {
+      "id": 6,
+      "name": "Mariana Castillo",
+      "role": "Desarrolladora Frontend",
+      "cohort": 2,
+      "period": "Ene - Jun 2023",
+      "description": "Construyo componentes reutilizables en React para la biblioteca de diseno. Integro APIs REST con interfaces responsivas y accesibles.",
+      "skills": ["React", "TypeScript", "Tailwind CSS"],
+      "avatar": "https://picsum.photos/seed/mari-c6/200/200.jpg"
+    },
+    {
+      "id": 7,
+      "name": "Andres Martinez",
+      "role": "Backend & APIs",
+      "cohort": 2,
+      "period": "Ene - Jun 2023",
+      "description": "Diseno y documento APIs RESTful con FastAPI. Implemento autenticacion OAuth2 y sistemas de rate limiting para proteger endpoints.",
+      "skills": ["Python", "FastAPI", "OAuth2"],
+      "avatar": "https://picsum.photos/seed/andres-m8/200/200.jpg"
+    },
+    {
+      "id": 8,
+      "name": "Camila Herrera",
+      "role": "QA & Testing",
+      "cohort": 2,
+      "period": "Ene - Jun 2023",
+      "description": "Implemento suites de pruebas automatizadas con Selenium y Cypress. Redujo bugs en produccion en un 60% con testing E2E.",
+      "skills": ["Cypress", "Selenium", "Jest"],
+      "avatar": "https://picsum.photos/seed/cami-h9/200/200.jpg"
+    },
+    {
+      "id": 9,
+      "name": "Nicolas Rojas",
+      "role": "Infraestructura Cloud",
+      "cohort": 3,
+      "period": "Jul - Dic 2023",
+      "description": "Administra instancias en AWS y configura arquitecturas serverless. Implemento monitoreo con CloudWatch y alertas automatizadas.",
+      "skills": ["AWS", "Terraform", "Lambda"],
+      "avatar": "https://picsum.photos/seed/nico-r1/200/200.jpg"
+    },
+    {
+      "id": 10,
+      "name": "Isabella Vargas",
+      "role": "Machine Learning",
+      "cohort": 3,
+      "period": "Jul - Dic 2023",
+      "description": "Entreno modelos de NLP para clasificacion automatica de tickets de soporte. Despliego modelos con FastAPI y Docker.",
+      "skills": ["PyTorch", "NLP", "MLflow"],
+      "avatar": "https://picsum.photos/seed/isa-v10/200/200.jpg"
+    },
+    {
+      "id": 11,
+      "name": "Santiago Morales",
+      "role": "Desarrollo Movil",
+      "cohort": 3,
+      "period": "Jul - Dic 2023",
+      "description": "Desarrollo una aplicacion movil multiplataforma con Flutter para gestion de solicitudes internas con notificaciones push.",
+      "skills": ["Flutter", "Dart", "Firebase"],
+      "avatar": "https://picsum.photos/seed/santi-m11/200/200.jpg"
+    },
+    {
+      "id": 12,
+      "name": "Paula Jimenez",
+      "role": "Base de Datos",
+      "cohort": 4,
+      "period": "Ene - Jun 2024",
+      "description": "Optimizo esquemas de bases de datos PostgreSQL y MongoDB. Implemento estrategias de respaldo automatico y replicacion.",
+      "skills": ["PostgreSQL", "MongoDB", "Redis"],
+      "avatar": "https://picsum.photos/seed/paula-j12/200/200.jpg"
+    },
+    {
+      "id": 13,
+      "name": "Mateo Diaz",
+      "role": "Full Stack Developer",
+      "cohort": 4,
+      "period": "Ene - Jun 2024",
+      "description": "Desarrollo un sistema de gestion de inventarios completo con Next.js y Node.js. Implemento autenticacion y roles de usuario.",
+      "skills": ["Next.js", "Node.js", "MongoDB"],
+      "avatar": "https://picsum.photos/seed/mateo-d13/200/200.jpg"
+    },
+    {
+      "id": 14,
+      "name": "Sofia Chavez",
+      "role": "Ciberseguridad",
+      "cohort": 4,
+      "period": "Ene - Jun 2024",
+      "description": "Implemento politicas de seguridad zero trust. Configuro firewalls y sistemas de deteccion de intrusos para la red institucional.",
+      "skills": ["SIEM", "Firewalls", "Zero Trust"],
+      "avatar": "https://picsum.photos/seed/sofia-c14/200/200.jpg"
+    },
+    {
+      "id": 15,
+      "name": "Daniel Flores",
+      "role": "IoT & Automatizacion",
+      "cohort": 5,
+      "period": "Jul - Dic 2024",
+      "description": "Desarrollo soluciones IoT para monitoreo de espacios fisicos. Integro sensores con dashboards en tiempo real usando MQTT.",
+      "skills": ["Arduino", "MQTT", "Node-RED"],
+      "avatar": "https://picsum.photos/seed/daniel-f15/200/200.jpg"
+    },
+    {
+      "id": 16,
+      "name": "Alejandra Ruiz",
+      "role": "Analisis de Datos",
+      "cohort": 5,
+      "period": "Jul - Dic 2024",
+      "description": "Crea pipelines de datos automatizados para reportes ejecutivos. Desarrolla visualizaciones interactivas con Power BI y Python.",
+      "skills": ["Power BI", "Pandas", "ETL"],
+      "avatar": "https://picsum.photos/seed/ale-ruiz16/200/200.jpg"
+    }
+  ]
+}
