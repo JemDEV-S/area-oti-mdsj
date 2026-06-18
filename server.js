@@ -59,43 +59,52 @@ const server = http.createServer(async (req, res) => {
   if (method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
   try {
-    // GET /api/interns
-    if (pathname === '/api/interns' && method === 'GET') {
+    // GET /api/data → todo el JSON
+    if (pathname === '/api/data' && method === 'GET') {
       return send(res, 200, readData());
     }
 
-    // POST /api/interns
-    if (pathname === '/api/interns' && method === 'POST') {
+    // PUT /api/director → reemplaza el director
+    if (pathname === '/api/director' && method === 'PUT') {
       const body = await getBody(req);
       const data = readData();
-      const nextId = data.interns.reduce((max, i) => Math.max(max, i.id), 0) + 1;
-      const intern = { id: nextId, ...body };
-      data.interns.push(intern);
+      data.director = { ...data.director, ...body, id: 0 };
       writeData(data);
-      return send(res, 201, intern);
+      return send(res, 200, data.director);
     }
 
-    // PUT /api/interns/:id
-    const editMatch = pathname.match(/^\/api\/interns\/(\d+)$/);
+    // POST /api/members → agregar miembro
+    if (pathname === '/api/members' && method === 'POST') {
+      const body = await getBody(req);
+      const data = readData();
+      const nextId = data.members.reduce((max, m) => Math.max(max, m.id), 0) + 1;
+      const member = { id: nextId, ...body };
+      data.members.push(member);
+      writeData(data);
+      return send(res, 201, member);
+    }
+
+    // PUT /api/members/:id
+    const editMatch = pathname.match(/^\/api\/members\/(\d+)$/);
     if (editMatch && method === 'PUT') {
-      const id  = parseInt(editMatch[1]);
+      const id   = parseInt(editMatch[1]);
       const body = await getBody(req);
       const data = readData();
-      const idx  = data.interns.findIndex(i => i.id === id);
+      const idx  = data.members.findIndex(m => m.id === id);
       if (idx === -1) return send(res, 404, { error: 'No encontrado' });
-      data.interns[idx] = { ...data.interns[idx], ...body, id };
+      data.members[idx] = { ...data.members[idx], ...body, id };
       writeData(data);
-      return send(res, 200, data.interns[idx]);
+      return send(res, 200, data.members[idx]);
     }
 
-    // DELETE /api/interns/:id
-    const delMatch = pathname.match(/^\/api\/interns\/(\d+)$/);
+    // DELETE /api/members/:id
+    const delMatch = pathname.match(/^\/api\/members\/(\d+)$/);
     if (delMatch && method === 'DELETE') {
-      const id  = parseInt(delMatch[1]);
+      const id   = parseInt(delMatch[1]);
       const data = readData();
-      const idx  = data.interns.findIndex(i => i.id === id);
+      const idx  = data.members.findIndex(m => m.id === id);
       if (idx === -1) return send(res, 404, { error: 'No encontrado' });
-      data.interns.splice(idx, 1);
+      data.members.splice(idx, 1);
       writeData(data);
       res.writeHead(204); res.end();
       return;
@@ -128,7 +137,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log('\n  OTI Practicantes');
+  console.log('\n  OTI Sistema Solar');
   console.log(`  Sitio  →  http://localhost:${PORT}`);
   console.log(`  Admin  →  http://localhost:${PORT}/admin\n`);
 });

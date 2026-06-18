@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTI Practicantes | Línea del Tiempo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Space Grotesk','sans-serif'],
+            mono: ['JetBrains Mono','monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg:#06080d;--bg2:#0c1018;--fg:#e8eaf0;--muted:#6b7394;
+      --accent:#00f0ff;--accent2:#00ff88;--accent3:#ffaa00;
+      --accent4:#ff6b6b;--accent5:#f97316;--accent6:#84cc16;
+      --card:#111623;--border:#1e2640;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden}
+    .font-mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+    /* Etiquetas de nodos 3D */
+    .node-label{
+      position:absolute;pointer-events:none;transform:translate(-50%,-130%);
+      padding:5px 12px;background:rgba(6,8,13,0.9);border:1px solid var(--border);
+      border-radius:6px;font-size:11px;font-family:'JetBrains Mono',monospace;
+      white-space:nowrap;opacity:0;transition:opacity .3s;backdrop-filter:blur(6px);
+    }
+    .node-label.visible{opacity:1}
+    .node-label .dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+
+    /* Panel de detalle */
+    .detail-backdrop{position:fixed;inset:0;background:rgba(6,8,13,0.6);z-index:90;opacity:0;pointer-events:none;transition:opacity .4s}
+    .detail-backdrop.open{opacity:1;pointer-events:auto}
+    .detail-panel{
+      position:fixed;right:-500px;top:0;width:460px;max-width:92vw;height:100vh;
+      background:linear-gradient(160deg,var(--card) 0%,#080c16 100%);
+      border-left:1px solid var(--border);z-index:100;
+      transition:right .55s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:40px 32px;
+    }
+    .detail-panel.open{right:0}
+    .detail-panel .close-btn{
+      position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;
+      background:var(--bg);border:1px solid var(--border);color:var(--muted);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;
+    }
+    .detail-panel .close-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .skill-tag{
+      display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;
+      font-family:'JetBrains Mono',monospace;margin:3px;border:1px solid;
+    }
+
+    /* Editor de código */
+    .code-editor{
+      background:#0d1117;border:1px solid var(--border);border-radius:12px;
+      overflow:hidden;box-shadow:0 0 80px rgba(0,240,255,0.04);
+    }
+    .code-header{background:#161b22;padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+    .code-dot{width:12px;height:12px;border-radius:50%}
+    .code-body{padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2.1;min-height:380px;overflow-x:auto}
+    .code-line{display:flex;gap:20px}
+    .ln{color:#3d4455;user-select:none;min-width:28px;text-align:right}
+    .kw{color:#ff7b72}.fn{color:#d2a8ff}.str{color:#a5d6ff}.cm{color:#3d4455;font-style:italic}
+    .pr{color:#79c0ff}.br{color:#8b949e}
+    .editable{
+      background:rgba(0,240,255,0.04);border:1px solid transparent;
+      border-bottom:1px dashed rgba(0,240,255,0.25);padding:2px 8px;border-radius:4px;
+      color:#a5d6ff;outline:none;min-width:80px;transition:all .3s;
+      font-family:'JetBrains Mono',monospace;font-size:13px;display:inline-block;
+    }
+    .editable:focus{border-color:var(--accent);background:rgba(0,240,255,0.1);box-shadow:0 0 12px rgba(0,240,255,0.15)}
+    .code-select{
+      background:rgba(0,240,255,0.04);border:1px solid transparent;
+      border-bottom:1px dashed rgba(0,240,255,0.25);padding:2px 8px;border-radius:4px;
+      color:#a5d6ff;outline:none;font-family:'JetBrains Mono',monospace;font-size:13px;
+      cursor:pointer;appearance:none;-webkit-appearance:none;
+    }
+    .code-select:focus{border-color:var(--accent);background:rgba(0,240,255,0.1)}
+    .code-select option{background:#0d1117;color:#a5d6ff}
+    .run-btn{
+      background:linear-gradient(135deg,#00ff88,#00cc6a);color:#06080d;border:none;
+      padding:12px 32px;border-radius:8px;font-family:'JetBrains Mono',monospace;
+      font-weight:700;font-size:14px;cursor:pointer;transition:all .3s;
+      display:inline-flex;align-items:center;gap:8px;
+    }
+    .run-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,255,136,0.3)}
+    .run-btn:active{transform:translateY(0)}
+    .terminal-out{
+      background:#0a0e16;border:1px solid var(--border);border-radius:8px;
+      padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;
+      color:var(--accent2);margin-top:20px;min-height:50px;max-height:200px;
+      overflow-y:auto;opacity:0;transform:translateY(10px);transition:all .5s;
+    }
+    .terminal-out.visible{opacity:1;transform:translateY(0)}
+
+    /* Toast */
+    .toast{
+      position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(120px);
+      background:var(--card);border:1px solid var(--accent2);color:var(--accent2);
+      padding:16px 32px;border-radius:12px;font-family:'JetBrains Mono',monospace;
+      z-index:200;transition:transform .5s cubic-bezier(.16,1,.3,1);
+      box-shadow:0 0 30px rgba(0,255,136,0.15);
+    }
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    /* Animaciones */
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .reveal{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .cursor-blink{animation:blink 1s step-end infinite}
+
+    /* Cohorte badges */
+    .cohort-badge{
+      display:inline-flex;align-items:center;gap:6px;padding:5px 14px;
+      border-radius:20px;font-size:12px;font-family:'JetBrains Mono',monospace;
+      background:rgba(255,255,255,0.03);border:1px solid var(--border);
+    }
+    .cohort-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+    @media(max-width:768px){
+      .detail-panel{width:100%;max-width:100vw;right:-100%}
+      .code-body{font-size:11px;padding:16px;line-height:1.9}
+      .editable{font-size:11px;min-width:60px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navegación -->
+  <nav class="fixed top-0 w-full z-50 backdrop-blur-xl bg-[#06080dcc] border-b border-[var(--border)]">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent2)] flex items-center justify-center">
+          <i class="fas fa-terminal text-[var(--bg)] text-sm"></i>
+        </div>
+        <span class="font-display font-800 text-lg tracking-tight">OTI<span class="text-[var(--accent)]">.</span></span>
+      </a>
+      <div class="flex items-center gap-6 text-sm font-mono text-[var(--muted)]">
+        <a href="#timeline" class="hover:text-[var(--accent)] transition-colors hidden sm:inline">Timeline</a>
+        <a href="#join" class="hover:text-[var(--accent2)] transition-colors hidden sm:inline">Postular</a>
+        <a href="#join" class="px-4 py-2 rounded-lg border border-[var(--accent2)] text-[var(--accent2)] hover:bg-[var(--accent2)] hover:text-[var(--bg)] transition-all text-xs">
+          <i class="fas fa-code mr-1"></i> Unirse
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Sección de la Espiral 3D -->
+    <section id="timeline" class="relative w-full" style="height:100vh;min-height:600px">
+      <div id="spiral-container" class="absolute inset-0">
+        <canvas id="spiral-canvas"></canvas>
+      </div>
+      <div id="labels-container" class="absolute inset-0 pointer-events-none" style="z-index:10"></div>
+
+      <!-- Overlay: Título -->
+      <div class="absolute top-24 left-6 sm:left-12 z-20 pointer-events-none" style="animation:fadeInUp .8s ease-out both">
+        <h1 class="font-display font-900 text-5xl sm:text-7xl tracking-tighter leading-none">
+          <span class="text-[var(--fg)]">Practi</span><span class="text-[var(--accent)]">cantes</span>
+        </h1>
+        <p class="font-mono text-[var(--muted)] text-sm mt-3 max-w-xs leading-relaxed">
+          La historia de quienes pasaron por la Oficina de Tecnologias de la Informacion
+        </p>
+      </div>
+
+      <!-- Overlay: Leyenda de cohortes -->
+      <div class="absolute bottom-20 left-6 sm:left-12 z-20 pointer-events-none flex flex-wrap gap-2" style="animation:fadeInUp 1s .3s ease-out both">
+        <div class="cohort-badge"><span class="cohort-dot" style="background:#00f0ff"></span>2022-A</div>
+        <div class="cohort-badge"><span class="cohort-dot" style="background:#00ff88"></span>2022-B</div>
+        <div class="cohort-badge"><span class="cohort-dot" style="background:#ffaa00"></span>2023-A</div>
+        <div class="cohort-badge"><span class="cohort-dot" style="background:#ff6b6b"></span>2023-B</div>
+        <div class="cohort-badge"><span class="cohort-dot" style="background:#f97316"></span>2024-A</div>
+        <div class="cohort-badge"><span class="cohort-dot" style="background:#84cc16"></span>2024-B</div>
+      </div>
+
+      <!-- Overlay: Instrucciones -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 font-mono text-[var(--muted)] text-xs flex items-center gap-4" style="animation:fadeInUp 1s .6s ease-out both">
+        <span><i class="fas fa-arrows-rotate mr-1"></i> Arrastra para rotar</span>
+        <span><i class="fas fa-hand-pointer mr-1"></i> Click en un nodo</span>
+        <span><i class="fas fa-magnifying-glass mr-1"></i> Scroll para zoom</span>
+      </div>
+    </section>
+
+    <!-- Sección para Postular -->
+    <section id="join" class="relative py-24 px-6 overflow-hidden">
+      <!-- Fondo decorativo -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-[var(--accent2)] opacity-[0.02] rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-0 left-0 w-80 h-80 bg-[var(--accent)] opacity-[0.02] rounded-full blur-[100px]"></div>
+      </div>
+
+      <div class="max-w-4xl mx-auto relative">
+        <div class="text-center mb-16 reveal">
+          <h2 class="font-display font-900 text-4xl sm:text-5xl tracking-tight mb-4">
+            Solicitud de <span class="text-[var(--accent2)]">Practicas</span>
+          </h2>
+          <p class="font-mono text-[var(--muted)] text-sm max-w-lg mx-auto">
+            Completa la funcion y ejecuta tu solicitud. Cada campo es un parametro que necesitamos para conocerte.
+          </p>
+        </div>
+
+        <div class="code-editor reveal" style="transition-delay:.2s">
+          <div class="code-header">
+            <span class="code-dot" style="background:#ff5f57"></span>
+            <span class="code-dot" style="background:#febc2e"></span>
+            <span class="code-dot" style="background:#28c840"></span>
+            <span class="font-mono text-xs text-[var(--muted)] ml-3">solicitud.js</span>
+          </div>
+          <div class="code-body" id="code-editor-body">
+            <div class="code-line"><span class="ln">1</span><span class="cm">// ─────────────────────────────────────────────</span></div>
+            <div class="code-line"><span class="ln">2</span><span class="cm">// OTI - Solicitud de Practicas</span></div>
+            <div class="code-line"><span class="ln">3</span><span class="cm">// ─────────────────────────────────────────────</span></div>
+            <div class="code-line"><span class="ln">4</span><span class="br">&nbsp;</span></div>
+            <div class="code-line"><span class="ln">5</span><span class="kw">function</span> <span class="fn">enviarSolicitud</span><span class="br">() {</span></div>
+            <div class="code-line"><span class="ln">6</span><span class="br">&nbsp;&nbsp;</span><span class="kw">const</span> <span class="pr">solicitud</span> = <span class="br">{</span></div>
+            <div class="code-line"><span class="ln">7</span><span class="br">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="pr">nombre</span>: <span class="str">"</span><span contenteditable="true" class="editable" data-field="nombre" spellcheck="false">Tu nombre completo</span><span class="str">"</span>,</div>
+            <div class="code-line"><span class="ln">8</span><span class="br">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="pr">correo</span>: <span class="str">"</span><span contenteditable="true" class="editable" data-field="correo" spellcheck="false">tu.correo@email.com</span><span class="str">"</span>,</div>
+            <div class="code-line"><span class="ln">9</span><span class="br">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="pr">universidad</span>: <span class="str">"</span><span contenteditable="true" class="editable" data-field="universidad" spellcheck="false">Tu universidad</span><span class="str">"</span>,</div>
+            <div class="code-line"><span class="ln">10</span><span class="br">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="pr">semestre</span>: <span class="str">"</span><span contenteditable="true" class="editable" data-field="semestre" spellcheck="false">8</span><span class="str">"</span>,</div>
+            <div class="code-line"><span class="ln">11</span><span class="br">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="pr">area</span>: <span class="str">"</span><select class="code-select" data-field="area">
+              <option value="Desarrollo Frontend">Desarrollo Frontend</option>
+              <option value="Desarrollo Backend">Desarrollo Backend</option>
+              <option value="Full Stack">Full Stack</option>
+              <option value="Ciencia de Datos">Ciencia de Datos</option>
+              <option value="Ciberseguridad">Ciberseguridad</option>
+              <option value="DevOps">DevOps</option>
+              <option value="Diseno UX/UI">Diseno UX/UI</option>
+              <option value="Cloud & Infra">Cloud & Infra</option>
+              <option value="QA & Testing">QA & Testing</option>
+              <option value="IoT & Automatizacion">IoT & Automatizacion</option>
+            </select><span class="str">"</span>,</div>
+            <div class="code-line"><span class="ln">12</span><span class="br">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="pr">motivacion</span>: <span class="str">"</span><span contenteditable="true" class="editable" data-field="motivacion" spellcheck="false" style="min-width:200px">Por que quieres ser practicante OTI...</span><span class="str">"</span></div>
+            <div class="code-line"><span class="ln">13</span><span class="br">&nbsp;&nbsp;};</span></div>
+            <div class="code-line"><span class="ln">14</span><span class="br">&nbsp;</span></div>
+            <div class="code-line"><span class="ln">15</span><span class="br">&nbsp;&nbsp;</span><span class="fn">submit</span><span class="br">(</span><span class="pr">solicitud</span><span class="br">);</span></div>
+            <div class="code-line"><span class="ln">16</span><span class="br">&nbsp;&nbsp;</span><span class="kw">return</span> <span class="str">"Solicitud enviada"</span><span class="br">;</span></div>
+            <div class="code-line"><span class="ln">17</span><span class="br">}</span></div>
+            <div class="code-line"><span class="ln">18</span><span class="br">&nbsp;</span></div>
+            <div class="code-line"><span class="ln">19</span><span class="br">&nbsp;&nbsp;</span><button class="run-btn" id="run-btn" aria-label="Ejecutar solicitud"><i class="fas fa-play"></i> Run solicitud.js</button></div>
+          </div>
+        </div>
+
+        <!-- Terminal de salida -->
+        <div class="terminal-out" id="terminal-out">
+          <div id="terminal-content"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-[var(--border)] py-10 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-mono text-[var(--muted)]">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--accent2)] flex items-center justify-center">
+          <i class="fas fa-terminal text-[var(--bg)] text-[10px]"></i>
+        </div>
+        <span>OTI Practicantes &copy; 2024</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Construido con Three.js + Talento</span>
+        <span class="text-[var(--accent)]"><i class="fas fa-heart"></i></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Panel de Detalle -->
+  <div class="detail-backdrop" id="detail-backdrop"></div>
+  <div class="detail-panel" id="detail-panel" role="dialog" aria-label="Detalle del practicante">
+    <button class="close-btn" id="close-detail" aria-label="Cerrar panel"><i class="fas fa-xmark"></i></button>
+    <div id="detail-content"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Three.js -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ─── Datos de practicantes ───
+    const cohortColors = ['#00f0ff','#00ff88','#ffaa00','#ff6b6b','#f97316','#84cc16'];
+    const cohortNames = ['Ene - Jun 2022','Jul - Dic 2022','Ene - Jun 2023','Jul - Dic 2023','Ene - Jun 2024','Jul - Dic 2024'];
+
+    const interns = [
+      { id:1, name:"Carlos Mendoza", role:"Desarrollador Backend", period:"Ene - Jun 2022", cohort:0,
+        description:"Implemento microservicios en Node.js para el sistema de gestion interna. Optimizo consultas SQL reduciendo tiempos de respuesta en un 40%.",
+        skills:["Node.js","PostgreSQL","Docker"], avatar:"https://picsum.photos/seed/carlos-m7/200/200.jpg" },
+      { id:2, name:"Lucia Fernandez", role:"Seguridad Informatica", period:"Ene - Jun 2022", cohort:0,
+        description:"Realizo auditorias de seguridad y pentesting a los sistemas de la organizacion. Documento vulnerabilidades y propone soluciones efectivas.",
+        skills:["Pentesting","Wireshark","Linux"], avatar:"https://picsum.photos/seed/lucia-f3/200/200.jpg" },
+      { id:3, name:"Diego Ramirez", role:"Ciencia de Datos", period:"Jul - Dic 2022", cohort:1,
+        description:"Desarrollo modelos predictivos para el analisis de datos institucionales. Creo dashboards interactivos con Python y D3.js.",
+        skills:["Python","TensorFlow","D3.js"], avatar:"https://picsum.photos/seed/diego-r5/200/200.jpg" },
+      { id:4, name:"Valentina Torres", role:"Diseno UX/UI", period:"Jul - Dic 2022", cohort:1,
+        description:"Rediseno el portal de servicios digitales mejorando la experiencia de usuario. Implemento un sistema de design tokens unificado.",
+        skills:["Figma","Design Systems","Accesibilidad"], avatar:"https://picsum.photos/seed/val-t2/200/200.jpg" },
+      { id:5, name:"Sebastian Lopez", role:"DevOps Engineer", period:"Jul - Dic 2022", cohort:1,
+        description:"Automatizo pipelines CI/CD con GitHub Actions. Migro infraestructura a contenedores Docker reduciendo tiempos de deploy en un 70%.",
+        skills:["Docker","Kubernetes","GitHub Actions"], avatar:"https://picsum.photos/seed/sebas-l4/200/200.jpg" },
+      { id:6, name:"Mariana Castillo", role:"Desarrolladora Frontend", period:"Ene - Jun 2023", cohort:2,
+        description:"Construyo componentes reutilizables en React para la biblioteca de diseno. Integro APIs REST con interfaces responsivas y accesibles.",
+        skills:["React","TypeScript","Tailwind CSS"], avatar:"https://picsum.photos/seed/mari-c6/200/200.jpg" },
+      { id:7, name:"Andres Martinez", role:"Backend & APIs", period:"Ene - Jun 2023", cohort:2,
+        description:"Diseno y documento APIs RESTful con FastAPI. Implemento autenticacion OAuth2 y sistemas de rate limiting para proteger endpoints.",
+        skills:["Python","FastAPI","OAuth2"], avatar:"https://picsum.photos/seed/andres-m8/200/200.jpg" },
+      { id:8, name:"Camila Herrera", role:"QA & Testing", period:"Ene - Jun 2023", cohort:2,
+        description:"Implemento suites de pruebas automatizadas con Selenium y Cypress. Redujo bugs en produccion en un 60% con testing E2E.",
+        skills:["Cypress","Selenium","Jest"], avatar:"https://picsum.photos/seed/cami-h9/200/200.jpg" },
+      { id:9, name:"Nicolas Rojas", role:"Infraestructura Cloud", period:"Jul - Dic 2023", cohort:3,
+        description:"Administra instancias en AWS y configura arquitecturas serverless. Implemento monitoreo con CloudWatch y alertas automatizadas.",
+        skills:["AWS","Terraform","Lambda"], avatar:"https://picsum.photos/seed/nico-r1/200/200.jpg" },
+      { id:10, name:"Isabella Vargas", role:"Machine Learning", period:"Jul - Dic 2023", cohort:3,
+        description:"Entreno modelos de NLP para clasificacion automatica de tickets de soporte. Despliego modelos con FastAPI y Docker.",
+        skills:["PyTorch","NLP","MLflow"], avatar:"https://picsum.photos/seed/isa-v10/200/200.jpg" },
+      { id:11, name:"Santiago Morales", role:"Desarrollo Movil", period:"Jul - Dic 2023", cohort:3,
+        description:"Desarrollo una aplicacion movil multiplataforma con Flutter para gestion de solicitudes internas con notificaciones push.",
+        skills:["Flutter","Dart","Firebase"], avatar:"https://picsum.photos/seed/santi-m11/200/200.jpg" },
+      { id:12, name:"Paula Jimenez", role:"Base de Datos", period:"Ene - Jun 2024", cohort:4,
+        description:"Optimizo esquemas de bases de datos PostgreSQL y MongoDB. Implemento estrategias de respaldo automatico y replicacion.",
+        skills:["PostgreSQL","MongoDB","Redis"], avatar:"https://picsum.photos/seed/paula-j12/200/200.jpg" },
+      { id:13, name:"Mateo Diaz", role:"Full Stack Developer", period:"Ene - Jun 2024", cohort:4,
+        description:"Desarrollo un sistema de gestion de inventarios completo con Next.js y Node.js. Implemento autenticacion y roles de usuario.",
+        skills:["Next.js","Node.js","MongoDB"], avatar:"https://picsum.photos/seed/mateo-d13/200/200.jpg" },
+      { id:14, name:"Sofia Chavez", role:"Ciberseguridad", period:"Ene - Jun 2024", cohort:4,
+        description:"Implemento politicas de seguridad zero trust. Configuro firewalls y sistemas de deteccion de intrusos para la red institucional.",
+        skills:["SIEM","Firewalls","Zero Trust"], avatar:"https://picsum.photos/seed/sofia-c14/200/200.jpg" },
+      { id:15, name:"Daniel Flores", role:"IoT & Automatizacion", period:"Jul - Dic 2024", cohort:5,
+        description:"Desarrollo soluciones IoT para monitoreo de espacios fisicos. Integro sensores con dashboards en tiempo real usando MQTT.",
+        skills:["Arduino","MQTT","Node-RED"], avatar:"https://picsum.photos/seed/daniel-f15/200/200.jpg" },
+      { id:16, name:"Alejandra Ruiz", role:"Analisis de Datos", period:"Jul - Dic 2024", cohort:5,
+        description:"Crea pipelines de datos automatizados para reportes ejecutivos. Desarrolla visualizaciones interactivas con Power BI y Python.",
+        skills:["Power BI","Pandas","ETL"], avatar:"https://picsum.photos/seed/ale-ruiz16/200/200.jpg" }
+    ];
+
+    // ─── Variables de escena ───
+    const canvas = document.getElementById('spiral-canvas');
+    const container = document.getElementById('spiral-container');
+    const labelsContainer = document.getElementById('labels-container');
+    let scene, camera, renderer, controls;
+    let nodeMeshes = [];
+    let labelElements = [];
+    let raycaster, mouse;
+    let spiralVisible = true;
+    let clock = new THREE.Clock();
+    let hoveredNode = null;
+
+    // ─── Clase Curva Helicoidal ───
+    class HelixCurve extends THREE.Curve {
+      constructor(radius = 5, height = 24, turns = 3) {
+        super();
+        this.radius = Math.max(0.1, radius);
+        this.height = Math.max(0.1, height);
+        this.turns = Math.max(1, turns);
+      }
+      getPoint(t, optionalTarget = new THREE.Vector3()) {
+        const angle = t * Math.PI * 2 * this.turns;
+        const x = this.radius * Math.cos(angle);
+        const y = (t - 0.5) * this.height;
+        const z = this.radius * Math.sin(angle);
+        return optionalTarget.set(x, y, z);
+      }
+    }
+
+    // ─── Inicializar escena ───
+    function init() {
+      // Escena
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x06080d, 0.018);
+
+      // Camara
+      const aspect = container.clientWidth / container.clientHeight;
+      camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 200);
+      camera.position.set(14, 6, 14);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x06080d, 1);
+
+      // Controles
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.4;
+      controls.minDistance = 6;
+      controls.maxDistance = 35;
+      controls.maxPolarAngle = Math.PI * 0.85;
+      controls.minPolarAngle = Math.PI * 0.15;
+
+      // Raycaster
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      // Crear elementos
+      createSpiral();
+      createNodes();
+      createParticles();
+      createAmbientLights();
+
+      // Eventos
+      window.addEventListener('resize', onResize);
+      canvas.addEventListener('click', onCanvasClick);
+      canvas.addEventListener('mousemove', onCanvasMouseMove);
+
+      // Visibilidad
+      const observer = new IntersectionObserver(entries => {
+        spiralVisible = entries[0].isIntersecting;
+      }, { threshold: 0.05 });
+      observer.observe(container);
+    }
+
+    // ─── Crear espiral (tubo) ───
+    let tubeMaterial;
+    function createSpiral() {
+      const helix = new HelixCurve(5, 24, 3);
+      const tubeGeo = new THREE.TubeGeometry(helix, 500, 0.07, 8, false);
+      tubeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          varying vec2 vUv;
+          void main() {
+            // Pulsos de energia que fluyen a lo largo del tubo
+            float flow1 = fract(vUv.x * 4.0 - uTime * 0.12);
+            float pulse1 = smoothstep(0.0, 0.12, flow1) * smoothstep(0.3, 0.12, flow1);
+            float flow2 = fract(vUv.x * 2.5 - uTime * 0.08 + 0.5);
+            float pulse2 = smoothstep(0.0, 0.08, flow2) * smoothstep(0.2, 0.08, flow2);
+
+            // Gradiente de color a lo largo de la espiral
+            vec3 c1 = vec3(0.0, 0.94, 1.0);
+            vec3 c2 = vec3(0.0, 1.0, 0.53);
+            vec3 c3 = vec3(1.0, 0.67, 0.0);
+            vec3 c4 = vec3(1.0, 0.42, 0.42);
+            vec3 col = mix(c1, c2, smoothstep(0.0, 0.35, vUv.x));
+            col = mix(col, c3, smoothstep(0.35, 0.65, vUv.x));
+            col = mix(col, c4, smoothstep(0.65, 1.0, vUv.x));
+
+            float alpha = 0.06 + pulse1 * 0.55 + pulse2 * 0.25;
+            gl_FragColor = vec4(col * (0.6 + pulse1 * 0.8), alpha);
+          }
+        `,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const tube = new THREE.Mesh(tubeGeo, tubeMaterial);
+      scene.add(tube);
+
+      // Segundo tubo mas ancho para halo
+      const haloGeo = new THREE.TubeGeometry(helix, 500, 0.35, 8, false);
+      const haloMat = new THREE.ShaderMaterial({
+        uniforms: { uTime: { value: 0 } },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          uniform float uTime;
+          void main() {
+            float glow = 0.015 + 0.01 * sin(vUv.x * 20.0 + uTime * 2.0);
+            vec3 col = vec3(0.0, 0.94, 1.0);
+            gl_FragColor = vec4(col, glow);
+          }
+        `,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const halo = new THREE.Mesh(haloGeo, haloMat);
+      scene.add(halo);
+      // Guardar referencia para actualizar tiempo
+      halo.userData.material = haloMat;
+      tube.userData.haloMat = haloMat;
+    }
+
+    // ─── Textura de resplandor ───
+    function createGlowTexture() {
+      const c = document.createElement('canvas');
+      c.width = 128; c.height = 128;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.15, 'rgba(255,255,255,0.6)');
+      g.addColorStop(0.4, 'rgba(255,255,255,0.15)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+
+    // ─── Crear nodos de practicantes ───
+    const glowTexture = createGlowTexture();
+    const helix = new HelixCurve(5, 24, 3);
+
+    function createNodes() {
+      interns.forEach((intern, i) => {
+        const t = (i + 0.5) / interns.length;
+        const point = helix.getPoint(t);
+        const color = new THREE.Color(cohortColors[intern.cohort]);
+
+        // Geometria del nodo (octaedro = look tecnologico)
+        const nodeGeo = new THREE.OctahedronGeometry(Math.max(0.01, 0.28), 0);
+        const nodeMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.9
+        });
+        const node = new THREE.Mesh(nodeGeo, nodeMat);
+        node.position.copy(point);
+        node.userData = { intern, index: i, baseScale: 1 };
+        scene.add(node);
+        nodeMeshes.push(node);
+
+        // Sprite de resplandor
+        const spriteMat = new THREE.SpriteMaterial({
+          map: glowTexture,
+          color: color,
+          blending: THREE.AdditiveBlending,
+          transparent: true,
+          opacity: 0.45,
+          depthWrite: false
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(2.2, 2.2, 1);
+        sprite.position.copy(point);
+        scene.add(sprite);
+        node.userData.sprite = sprite;
+
+        // Anillo exterior decorativo
+        const ringGeo = new THREE.RingGeometry(Math.max(0.01, 0.5), Math.max(0.02, 0.55), 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.15,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.copy(point);
+        ring.lookAt(camera.position);
+        scene.add(ring);
+        node.userData.ring = ring;
+
+        // Etiqueta HTML
+        const label = document.createElement('div');
+        label.className = 'node-label';
+        label.innerHTML = `<span class="dot" style="background:${cohortColors[intern.cohort]}"></span>${intern.name}`;
+        labelsContainer.appendChild(label);
+        labelElements.push({ element: label, node });
+      });
+    }
+
+    // ─── Particulas ambientales ───
+    let particles;
+    function createParticles() {
+      const count = 1500;
+      const positions = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 50;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 35;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+        sizes[i] = Math.random() * 0.08 + 0.02;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      // Textura circular suave
+      const pc = document.createElement('canvas');
+      pc.width = 32; pc.height = 32;
+      const pctx = pc.getContext('2d');
+      const pg = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+      pg.addColorStop(0, 'rgba(255,255,255,1)');
+      pg.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+      pg.addColorStop(1, 'rgba(255,255,255,0)');
+      pctx.fillStyle = pg;
+      pctx.fillRect(0, 0, 32, 32);
+      const pTex = new THREE.CanvasTexture(pc);
+
+      const mat = new THREE.PointsMaterial({
+        map: pTex,
+        size: 0.12,
+        color: 0x4488aa,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      });
+      particles = new THREE.Points(geo, mat);
+      scene.add(particles);
+    }
+
+    // ─── Luces ───
+    function createAmbientLights() {
+      const ambient = new THREE.AmbientLight(0x223344, 0.5);
+      scene.add(ambient);
+      const point1 = new THREE.PointLight(0x00f0ff, 1, 30);
+      point1.position.set(8, 8, 8);
+      scene.add(point1);
+      const point2 = new THREE.PointLight(0x00ff88, 0.6, 30);
+      point2.position.set(-8, -4, -8);
+      scene.add(point2);
+    }
+
+    // ─── Actualizar etiquetas HTML ───
+    function updateLabels() {
+      labelElements.forEach(({ element, node }) => {
+        const pos = node.position.clone();
+        pos.project(camera);
+        const x = (pos.x * 0.5 + 0.5) * container.clientWidth;
+        const y = (-pos.y * 0.5 + 0.5) * container.clientHeight;
+        element.style.left = x + 'px';
+        element.style.top = y + 'px';
+        // Solo visible si esta frente a la camara y dentro del viewport
+        const isInFront = pos.z < 1 && pos.z > 0;
+        const isInView = x > -100 && x < container.clientWidth + 100 && y > -50 && y < container.clientHeight + 50;
+        element.classList.toggle('visible', isInFront && isInView);
+      });
+    }
+
+    // ─── Click en nodo ───
+    function onCanvasClick(event) {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(nodeMeshes);
+      if (intersects.length > 0) {
+        const intern = intersects[0].object.userData.intern;
+        showDetail(intern);
+      }
+    }
+
+    // ─── Hover en nodo ───
+    function onCanvasMouseMove(event) {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(nodeMeshes);
+      if (intersects.length > 0) {
+        canvas.style.cursor = 'pointer';
+        const obj = intersects[0].object;
+        if (hoveredNode !== obj) {
+          // Reset anterior
+          if (hoveredNode) {
+            hoveredNode.userData.baseScale = 1;
+            hoveredNode.userData.sprite.material.opacity = 0.45;
+          }
+          hoveredNode = obj;
+          hoveredNode.userData.baseScale = 1.5;
+          hoveredNode.userData.sprite.material.opacity = 0.8;
+        }
+      } else {
+        canvas.style.cursor = 'grab';
+        if (hoveredNode) {
+          hoveredNode.userData.baseScale = 1;
+          hoveredNode.userData.sprite.material.opacity = 0.45;
+          hoveredNode = null;
+        }
+      }
+    }
+
+    // ─── Mostrar detalle ───
+    function showDetail(intern) {
+      const panel = document.getElementById('detail-panel');
+      const backdrop = document.getElementById('detail-backdrop');
+      const content = document.getElementById('detail-content');
+      const color = cohortColors[intern.cohort];
+
+      content.innerHTML = `
+        <div style="animation:fadeInUp .5s ease-out both">
+          <div class="relative mb-6">
+            <img src="${intern.avatar}" alt="${intern.name}"
+              class="w-28 h-28 rounded-2xl object-cover border-2" style="border-color:${color}">
+            <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono font-bold"
+              style="background:${color};color:var(--bg)">
+              ${intern.cohort + 1}
+            </div>
+          </div>
+          <h3 class="font-display font-800 text-2xl tracking-tight mb-1">${intern.name}</h3>
+          <p class="font-mono text-sm mb-3" style="color:${color}">${intern.role}</p>
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono mb-6"
+            style="background:rgba(255,255,255,0.04);border:1px solid var(--border)">
+            <i class="fas fa-calendar-alt" style="color:${color}"></i>
+            ${intern.period}
+          </div>
+          <p class="text-[var(--muted)] text-sm leading-relaxed mb-6">${intern.description}</p>
+          <div class="mb-2 text-xs font-mono text-[var(--muted)] uppercase tracking-wider">Skills</div>
+          <div class="flex flex-wrap">
+            ${intern.skills.map(s => `<span class="skill-tag" style="color:${color};border-color:${color}33">${s}</span>`).join('')}
+          </div>
+          <div class="mt-8 pt-6 border-t border-[var(--border)]">
+            <p class="text-xs font-mono text-[var(--muted)]">
+              <i class="fas fa-building mr-1" style="color:${color}"></i>
+              Oficina de Tecnologias de la Informacion
+            </p>
+          </div>
+        </div>
+      `;
+
+      panel.classList.add('open');
+      backdrop.classList.add('open');
+    }
+
+    // ─── Cerrar detalle ───
+    document.getElementById('close-detail').addEventListener('click', closeDetail);
+    document.getElementById('detail-backdrop').addEventListener('click', closeDetail);
+    function closeDetail() {
+      document.getElementById('detail-panel').classList.remove('open');
+      document.getElementById('detail-backdrop').classList.remove('open');
+    }
+
+    // ─── Resize ───
+    function onResize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / Math.max(1, h);
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    // ─── Loop de animacion ───
+    function animate() {
+      requestAnimationFrame(animate);
+      if (!spiralVisible) return;
+
+      const elapsed = clock.getElapsedTime();
+
+      // Actualizar shader del tubo
+      if (tubeMaterial) tubeMaterial.uniforms.uTime.value = elapsed;
+      // Actualizar halo
+      const haloMat = scene.children.find(c => c.userData && c.userData.haloMat)?.userData?.haloMat;
+      if (haloMat) haloMat.uniforms.uTime.value = elapsed;
+
+      // Animar nodos (rotacion + pulso)
+      nodeMeshes.forEach((node, i) => {
+        node.rotation.y = elapsed * 0.5 + i * 0.3;
+        node.rotation.x = Math.sin(elapsed * 0.3 + i) * 0.2;
+        // Pulso suave
+        const pulse = 1 + Math.sin(elapsed * 2 + i * 0.5) * 0.08;
+        const s = node.userData.baseScale * pulse;
+        node.scale.set(s, s, s);
+        // Anillo mirando a la camara
+        if (node.userData.ring) {
+          node.userData.ring.lookAt(camera.position);
+          const ringPulse = 1 + Math.sin(elapsed * 1.5 + i) * 0.1;
+          node.userData.ring.scale.set(ringPulse, ringPulse, ringPulse);
+        }
+      });
+
+      // Rotar particulas
+      if (particles) {
+        particles.rotation.y = elapsed * 0.015;
+        particles.rotation.x = Math.sin(elapsed * 0.05) * 0.02;
+      }
+
+      controls.update();
+      updateLabels();
+      renderer.render(scene, camera);
+    }
+
+    // ─── Iniciar ───
+    init();
+    animate();
+
+    // ─── Seccion de postulacion: logica del editor de codigo ───
+    const runBtn = document.getElementById('run-btn');
+    const terminalOut = document.getElementById('terminal-out');
+    const terminalContent = document.getElementById('terminal-content');
+
+    runBtn.addEventListener('click', () => {
+      // Recolectar datos
+      const fields = {};
+      document.querySelectorAll('.editable').forEach(el => {
+        fields[el.dataset.field] = el.textContent.trim();
+      });
+      const areaSelect = document.querySelector('.code-select');
+      if (areaSelect) fields.area = areaSelect.value;
+
+      // Validar
+      const defaults = ['Tu nombre completo','tu.correo@email.com','Tu universidad','8','Por que quieres ser practicante OTI...'];
+      let incomplete = false;
+      for (const key in fields) {
+        if (defaults.includes(fields[key]) || !fields[key]) {
+          incomplete = true;
+          break;
+        }
+      }
+
+      terminalOut.classList.add('visible');
+
+      if (incomplete) {
+        terminalContent.innerHTML = `<span style="color:#ff6b6b"><i class="fas fa-exclamation-triangle"></i> Error: Todos los campos son obligatorios.</span>\n<span style="color:var(--muted)">Edita los valores en verde del editor y vuelve a ejecutar.</span>`;
+      } else {
+        // Simular envio
+        terminalContent.innerHTML = `<span style="color:var(--muted)">Compilando solicitud...</span>\n`;
+        setTimeout(() => {
+          terminalContent.innerHTML += `<span style="color:var(--accent)">Validando campos... OK</span>\n`;
+        }, 500);
+        setTimeout(() => {
+          terminalContent.innerHTML += `<span style="color:var(--accent)">Enviando al servidor... OK</span>\n`;
+        }, 1200);
+        setTimeout(() => {
+          terminalContent.innerHTML += `\n<span style="color:var(--accent2)"><i class="fas fa-check-circle"></i> Solicitud enviada exitosamente!</span>\n<span style="color:var(--muted)">Nombre: ${fields.nombre}</span>\n<span style="color:var(--muted)">Area: ${fields.area}</span>\n<span style="color:var(--muted)">Te contactaremos en ${fields.correo}</span>`;
+          showToast('Solicitud registrada con exito');
+        }, 2000);
+      }
+    });
+
+    // ─── Toast ───
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${msg}`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // ─── Scroll reveal ───
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => revealObserver.observe(el));
+
+    // ─── Teclado: cerrar panel con Escape ───
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDetail();
+    });
+
+  </script>
+</body>
+</html>
